@@ -59,7 +59,12 @@ func main() {
 					ft := scope.Lookup(i.Name)
 					//spew.Dump(ft.Type())
 					if ft != nil {
-						u := ft.Type().Underlying()
+						t := ft.Type()
+						if t == nil {
+							fmtError("%s:%d type is nil? FIXME\n", os.Args[1], fset.Position(ret.Pos()).Line)
+							os.Exit(4)
+						}
+						u := t.Underlying()
 						if types.IsInterface(u) {
 							//spew.Dump(u)
 							if _, ok := u.(*types.Interface); ok {
