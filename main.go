@@ -48,34 +48,40 @@ func main() {
 	//spew.Dump(f)
 	ast.Inspect(f, func(n ast.Node) bool {
 		ret, ok := n.(*ast.FuncDecl)
-		if ok {
-			//spew.Dump(ret.Type.Results)
-			if ret.Type.Results == nil {
-				return false
-			}
-			for _, field := range ret.Type.Results.List {
-				//spew.Dump(field)
-				if i, ok := field.Type.(*ast.Ident); ok {
-					ft := scope.Lookup(i.Name)
-					//spew.Dump(ft.Type())
-					if ft != nil {
-						t := ft.Type()
-						if t == nil {
-							fmtError("%s:%d type is nil? FIXME\n", os.Args[1], fset.Position(ret.Pos()).Line)
-							os.Exit(4)
-						}
-						u := t.Underlying()
-						if types.IsInterface(u) {
-							//spew.Dump(u)
-							if _, ok := u.(*types.Interface); ok {
-								fmt.Printf("%s:%d returned interface: %s\n", os.Args[1], fset.Position(ret.Pos()).Line, ft.Name())
-							}
-						}
-					}
-
-				}
-			}
+		if !ok {
 			return true
+		}
+		//spew.Dump(ret.Type.Results)
+		if ret.Type.Results == nil {
+			return false
+		}
+		for _, field := range ret.Type.Results.List {
+			//spew.Dump(field)
+			i, ok := field.Type.(*ast.Ident)
+			if !ok {
+				continue
+			}
+
+			ft := scope.Lookup(i.Name)
+			//spew.Dump(ft.Type())
+			if ft == nil {
+				continue
+			}
+
+			t := ft.Type()
+			if t == nil {
+				fmtError("%s:%d type is nil? FIXME\n", os.Args[1], fset.Position(ret.Pos()).Line)
+				os.Exit(4)
+			}
+			u := t.Underlying()
+			if !types.IsInterface(u) {
+				continue
+			}
+
+			//spew.Dump(u)
+			if _, ok := u.(*types.Interface); ok {
+				fmt.Printf("%s:%d returned interface: %s\n", os.Args[1], fset.Position(ret.Pos()).Line, ft.Name())
+			}
 		}
 		return true
 	})
